@@ -1,95 +1,60 @@
-# Active Hinge Simulations
+# Active Hinge Simulations: Symmetry Breaking in Crowded Channels
 
-This repository contains simulation codes used in our study of **motile active particle clusters**. The system involves a pair of self-propelled rods connected by a hinge and embedded in a crowded medium. We provide two simulation setups:
-
-- `double/`: Simulations where **both rods are alive**.
-- `single/`: Simulations where **one rod is already absorbed** (asymmetric case).
-
-📌 Note  
-Output folders: (data/, mfpt/, temp/)
+This repository contains simulation codes used in our study of **motile active particle clusters**. The system involves a pair of self-propelled rods connected by a hinge and embedded in a crowded medium.
 
 These codes were used to generate the results for our paper titled:
 
-> Symmetry breaking in crowded channels  
+> Symmetry-breaking motility of an active hinge in a crowded channel  
 > Leonardo Garibaldi Rigon and Yongjoo Baek  
-> _Submitted to: Soft Matter Journal_  
-> _[arXiv link]_
+> _[Soft Matter (2026)](https://doi.org/10.1039/D5SM00622H)_  
 
 ---
 
-## Requirements
+## Repository Structure
 
-- GCC compiler
-- [Gnuplot](http://www.gnuplot.info/) for fitting survival curves
+* **main.c**: The primary entry point for the simulation loop.
+* **params.h**: Global simulation parameters and physical constants.
+* **particles.c**: Core logic for position updates, hinge constraints, and particle interactions.
+* **random.c / utils.c**: Helper functions for the random number generator and periodic boundary conditions.
+* **survival_rate.c**: Post-processing script to calculate survival curves from raw data.
+* **data/**: (Required) Target folder for raw measurement files (.dat).
+* **mfpt/**: (Required) Target folder for processed survival rate outputs.
+* **temp/**: (Required) Temporary storage for MFPT fits.
 
 ---
 
-## 📂 double/: Two Active Rods
+## Getting Started
 
-▶️ Main Simulation (file: double_hinge.c)
+### Prerequisites
+* **GCC compiler**
+* **[Gnuplot](http://www.gnuplot.info/)** for fitting survival curves
+
+### Installations & Setup
+1. Clone the repository.
+2. Ensure the output directories exist:
 ```
-gcc double_hinge.c -lm -O3
-./a.out
+mkdir -p data mfpt temp
 ```
-Set parameters at the top of the file:
-1. SIMULATION PARAMETERS section: typical values to change
-2. FIXED PARAMETERS section: for advanced control
+3. Configure physical parameters in params.h. Key flags include:
+- CHECK_FROM_SECOND: Set to 1 to start simulations with the first rod already "absorbed".
+- CHECK_SAVE_DET: Set to 1 to output angle data and extra simulation details.
 
-Output files are written to ../data/
-
-Optional flags (set in code):
-1. SAVE_CONFIGS = 1: saves particle positions
-2. SAVE_DETAILS = 1: saves angles and extra details
-
-📉 Estimating MFPT (files: survival_rate.c and fit_mfpt.gnu)
+### Running the Simulation
+To compile and run the main simulation:
 ```
-gcc survival_rate.c -lm -O3
-./a.out
+gcc -O3 main.c particles.c random.c utils.c -lm -o hinge_sim
+./hinge_sim
 ```
-Reads measurement files from ../data/  
-Outputs survival probabilities to ../mfpt/
 
-Fitting with Gnuplot:
+### Estimating MFPT
+After generating data, use survival_rate.c to process the results:
+```
+gcc -O3 survival_rate.c -lm -o survival_tool
+./survival_tool
+```
+
+### Fit MFPT in Gnuplot
 ```
 load 'fit_mfpt.gnu'
 ```
-Adjust parameters in the .gnu file to match the simulation
-
-📉 Calculating Mean Squared Displacement (MSD) (file: msd.c)
-
-Requires: SAVE_DETAILS = 1 in double_hinge.c  
-Outputs saved to ../data/
-```
-gcc msd.c -lm -O3
-./a.out
-```
-
-## 📂 single/: One Rod Already Absorbed
-▶️ Main Simulation (file: single_hinge.c)
-```
-gcc single_hinge.c -lm -O3
-./a.out
-```
-Setup similar to double_hinge.c
-
-Extra optional flags (set in code):
-1. SAVE_MSD: computes MSD internally
-2. SAVE_FINALS: saves data from the final 50 steps (forces, torque, etc.)
-3. SAVE_TORQUE: saves torque data
-4. SAVE_N0: logs information when particles below the hinge are 0 or 1
-
-📉 Estimating MFPT
-
-Same process as in the double/ folder
-
-📉 Estimating Time in State T<sub>N</sub> (files: terms_surv_rate.c and fit_mfpt_terms.gnu)
-```
-gcc terms_surv_rate.c -lm -O3
-./a.out
-```
-Outputs survival rates for each coarse-grained state to mfpt/ folder
-
-Fitting with Gnuplot:
-```
-load 'fit_mfpt_terms.gnu'
-```
+Note: Ensure the parameters inside fit_mfpt.gnu match the ranges defined in your C code.
